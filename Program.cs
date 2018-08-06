@@ -5,25 +5,34 @@ namespace Validator
 {
     class Program
     {
+
         // 消费者
         static void Main(string[] args)
         {
             Console.WriteLine("Hello World!");
-            // 假设DI解决
-            var factory = new ValidatorFactory();
-            // 假设DI解决
-            factory.CurrencyValidator = new CurrencyValidator();
 
-            var validators = factory.GetValidators();
-
-            foreach (var item in validators)
-            {
-                Console.WriteLine(item.Validate());
-                
-            }
+            // 假设DI解决
+            AFeatureToggle aFeatureToggle = new AFeatureToggle();
+            aFeatureToggle.CurrencyValidator = new CurrencyValidator();
+            aFeatureToggle.DaysLimitValidator = new DaysLimitValidator();
 
             Console.WriteLine("------------done------------");
             Console.Read();
+        }
+    }
+
+    public class AFeatureToggle
+    {
+        public IValidateCurrency CurrencyValidator { get; set; }
+
+        public IValidateDaysLimit DaysLimitValidator { get; set; }
+
+        public bool ValidateAdditionalConditions()
+        {
+            CurrencyValidator.Initialize(new List<string> { "USD", "CNY" });
+            DaysLimitValidator.Initialize(2);
+
+            return (CurrencyValidator as IValidator).Validate() && (DaysLimitValidator as IValidator).Validate();
         }
     }
 
@@ -37,9 +46,9 @@ namespace Validator
         void Initialize(List<string> currencyName);
     }
 
-    public interface IValidatorFactory
+    public interface IValidateDaysLimit
     {
-        IEnumerable<IValidator> GetValidators();
+        void Initialize(decimal daysCount);
     }
 
     public class CurrencyValidator : IValidator, IValidateCurrency
@@ -57,18 +66,19 @@ namespace Validator
         }
     }
 
-    // Factory应该有接
-    public class ValidatorFactory : IValidatorFactory
+    public class DaysLimitValidator : IValidator, IValidateDaysLimit
     {
-        public IValidateCurrency CurrencyValidator { get; set; }
-
-        public IEnumerable<IValidator> GetValidators()
+        private decimal daysLimit;
+        public void Initialize(decimal daysCount)
         {
-            // 也可以单独提取成为一个接口方法，由消费者调用
-            CurrencyValidator.Initialize(new List<string> {"CNY", "USD"});
-
-            return new List<IValidator> { CurrencyValidator as IValidator };
+            daysLimit = daysCount;
         }
 
+        public bool Validate()
+        {
+            // 假逻辑
+            return daysLimit > 1;
+        }
     }
+
 }
