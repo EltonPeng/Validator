@@ -5,16 +5,16 @@ namespace Validator
 {
     class Program
     {
-
-        // 消费者
         static void Main(string[] args)
         {
             Console.WriteLine("Hello World!");
 
-            // 假设DI解决
+            // Production Code, DI will resolve object creation.
             AFeatureToggle aFeatureToggle = new AFeatureToggle();
             aFeatureToggle.CurrencyValidator = new CurrencyValidator();
             aFeatureToggle.DaysLimitValidator = new DaysLimitValidator();
+
+            Console.WriteLine(aFeatureToggle.ValidateAdditionalConditions());
 
             Console.WriteLine("------------done------------");
             Console.Read();
@@ -29,8 +29,10 @@ namespace Validator
 
         public bool ValidateAdditionalConditions()
         {
-            CurrencyValidator.Initialize(new List<string> { "USD", "CNY" });
-            DaysLimitValidator.Initialize(2);
+            var AFeatureCurrencies = new List<string> { "USD", "CNY" };
+            CurrencyValidator.Initialize(AFeatureCurrencies);
+            decimal AFeatureDaysLimit = 2m;
+            DaysLimitValidator.Initialize(AFeatureDaysLimit);
 
             return (CurrencyValidator as IValidator).Validate() && (DaysLimitValidator as IValidator).Validate();
         }
@@ -61,7 +63,7 @@ namespace Validator
 
         public bool Validate()
         {
-            // 假逻辑
+            // fake
             return currencies.Count > 1;
         }
     }
@@ -76,7 +78,7 @@ namespace Validator
 
         public bool Validate()
         {
-            // 假逻辑
+            // fake
             return daysLimit > 1;
         }
     }
