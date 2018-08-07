@@ -24,7 +24,7 @@ namespace Validator
             Mock<IValidateDaysLimit> mockValidateDaysLimit = new Mock<IValidateDaysLimit>();
 
             mockValidateCurrency.As<IValidator>().Setup(x => x.Validate()).Returns(true);
-            mockValidateDaysLimit.As<IValidator>().Setup(x => x.Validate()).Returns(true);
+            mockValidateDaysLimit.As<IValidator>().Setup(x => x.Validate()).Returns(false);
 
             AFeatureToggle testObject = new AFeatureToggle();
             testObject.CurrencyValidator = mockValidateCurrency.Object;
@@ -51,8 +51,6 @@ namespace Validator
             decimal AFeatureDaysLimit = 2m;
             DaysLimitValidator.Initialize(AFeatureDaysLimit);
             
-            //Moq : MockValidateCurrency.As<IValidator>().Setup(x => x.Validate()).Returns(true);
-
             return (CurrencyValidator as IValidator).Validate() && (DaysLimitValidator as IValidator).Validate();
         }
     }
@@ -70,6 +68,11 @@ namespace Validator
     public interface IValidateDaysLimit
     {
         void Initialize(decimal daysCount);
+    }
+
+    public interface IFeatureToggleValidatorManager
+    {
+        List<IValidator> GetValidators();
     }
 
     public class CurrencyValidator : IValidator, IValidateCurrency
@@ -99,6 +102,30 @@ namespace Validator
         {
             // fake
             return daysLimit > 1;
+        }
+    }
+
+    public class AFeatureToggleValidatorsManager : IFeatureToggleValidatorManager
+    {
+        private List<IValidator> validators;
+
+        public IValidateCurrency CurrencyValidator { get; set; }
+
+        public IValidateDaysLimit DaysLimitValidator { get; set; }
+
+        public List<IValidator> GetValidators()
+        {
+            validators = new List<IValidator>();
+
+            var AFeatureCurrencies = new List<string> { "USD", "CNY" };
+            CurrencyValidator.Initialize(AFeatureCurrencies);
+            decimal AFeatureDaysLimit = 2m;
+            DaysLimitValidator.Initialize(AFeatureDaysLimit);
+
+            validators.Add(CurrencyValidator as IValidator);
+            validators.Add(DaysLimitValidator as IValidator);
+
+            return validators;
         }
     }
 
