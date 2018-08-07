@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 
+using Moq;
+
 namespace Validator
 {
     class Program
@@ -17,6 +19,21 @@ namespace Validator
             Console.WriteLine(aFeatureToggle.ValidateAdditionalConditions());
 
             Console.WriteLine("------------done------------");
+
+            Mock<IValidateCurrency> mockValidateCurrency = new Mock<IValidateCurrency>();
+            Mock<IValidateDaysLimit> mockValidateDaysLimit = new Mock<IValidateDaysLimit>();
+
+            mockValidateCurrency.As<IValidator>().Setup(x => x.Validate()).Returns(true);
+            mockValidateDaysLimit.As<IValidator>().Setup(x => x.Validate()).Returns(true);
+
+            AFeatureToggle testObject = new AFeatureToggle();
+            testObject.CurrencyValidator = mockValidateCurrency.Object;
+            testObject.DaysLimitValidator = mockValidateDaysLimit.Object;
+
+            var result = testObject.ValidateAdditionalConditions();
+
+            Console.WriteLine("UT:" + result.ToString());
+
             Console.Read();
         }
     }
@@ -33,6 +50,8 @@ namespace Validator
             CurrencyValidator.Initialize(AFeatureCurrencies);
             decimal AFeatureDaysLimit = 2m;
             DaysLimitValidator.Initialize(AFeatureDaysLimit);
+            
+            //Moq : MockValidateCurrency.As<IValidator>().Setup(x => x.Validate()).Returns(true);
 
             return (CurrencyValidator as IValidator).Validate() && (DaysLimitValidator as IValidator).Validate();
         }
